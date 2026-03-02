@@ -1,7 +1,17 @@
 plugins {
-	id 'java'
-	id 'org.springframework.boot' version '3.5.10'
-	id 'io.spring.dependency-management' version '1.1.7'
+    id 'java'
+    id 'org.springframework.boot' version '3.5.10'
+    id 'io.spring.dependency-management' version '1.1.7'
+}
+
+configurations { // 프로젝트 빌드시 새로운 속성에 대한 메타데이터 자동 생성 및 저장
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+}
+
+bootRun {
+    systemProperty 'spring.profiles.active', 'testdata'
 }
 
 group = 'com.polarbookshop'
@@ -9,24 +19,41 @@ version = '0.0.1-SNAPSHOT'
 description = 'Manages the books in the catalog'
 
 java {
-	toolchain {
-		languageVersion = JavaLanguageVersion.of(17)
-	}
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
+
+ext {
+    set('springCloudVersion', "2025.0.1")
 }
 
 repositories {
-	mavenCentral()
+    mavenCentral()
 }
 
 dependencies {
-	implementation 'org.springframework.boot:spring-boot-starter-web'
-	implementation 'org.springframework.boot:spring-boot-starter-validation'
+    annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
 
-	testImplementation 'org.springframework.boot:spring-boot-starter-test'
-	testImplementation 'org.springframework.boot:spring-boot-starter-webflux'
-	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.springframework.book:spring-boot-starter-actuator'
+
+    implementation 'org.springframework.cloud:spring-cloud-starter-config'
+    implementation 'org.springframework.retry:spring-retry'
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.boot:spring-boot-starter-webflux'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+dependencyManagement {
+    imports {
+        // 스프링 클라우드 의존성 관리를 위한 BOM(Bill of Materials) 추가
+        mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
+    }
 }
 
 tasks.named('test') {
-	useJUnitPlatform()
+    useJUnitPlatform()
 }
