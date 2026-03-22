@@ -19,6 +19,11 @@ class BookControllerMvcTests {
     @Autowired
     private MockMvc mockMvc;
 
+    /**
+     * [실무] @MockitoBean과 같은 기능을 사용할경우 테스트 간의 Application Context를 공유할 수 없어 전체 테스트 수행시간이 길어질 수 있다
+     * <br>
+     * @see <a href="https://docs.spring.io/spring-framework/reference/testing/testcontext-framework/ctx-management/caching.html">[Spring Docs] Context Caching</a>
+     */
     @MockitoBean
     private BookService bookService;
 

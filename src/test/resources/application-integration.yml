@@ -1,0 +1,4 @@
+spring:
+  datasource:
+    url: jdbc:tc:postgresql:14.4:///
+    driver-class-name: org.testcontainers.jdbc.ContainerDatabaseDriver

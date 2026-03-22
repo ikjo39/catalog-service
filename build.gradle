@@ -26,6 +26,7 @@ java {
 
 ext {
     set('springCloudVersion', "2025.0.1")
+    set('testcontainersVersion', "1.21.0")
 }
 
 repositories {
@@ -37,13 +38,18 @@ dependencies {
 
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
-    implementation 'org.springframework.book:spring-boot-starter-actuator'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
 
     implementation 'org.springframework.cloud:spring-cloud-starter-config'
     implementation 'org.springframework.retry:spring-retry'
 
+    implementation 'org.springframework.boot:spring-boot-starter-data-jdbc'
+    runtimeOnly 'org.postgresql:postgresql'
+
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.boot:spring-boot-starter-webflux'
+    testImplementation 'org.testcontainers:postgresql'
+    testImplementation 'org.testcontainers:jdbc'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
@@ -51,6 +57,7 @@ dependencyManagement {
     imports {
         // 스프링 클라우드 의존성 관리를 위한 BOM(Bill of Materials) 추가
         mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
+        mavenBom "org.testcontainers:testcontainers-bom:${testcontainersVersion}"
     }
 }
 
