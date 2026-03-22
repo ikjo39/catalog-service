@@ -45,6 +45,9 @@ dependencies {
 
     implementation 'org.springframework.boot:spring-boot-starter-data-jdbc'
     runtimeOnly 'org.postgresql:postgresql'
+    implementation 'org.flywaydb:flyway-core'
+    // Flyway 10부터 DB별 지원이 코어에서 분리되었고, 11.x에서는 flyway-database-postgresql 모듈을 별도로 추가해야 PostgreSQL을 인식함
+    runtimeOnly 'org.flywaydb:flyway-database-postgresql'
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.boot:spring-boot-starter-webflux'
