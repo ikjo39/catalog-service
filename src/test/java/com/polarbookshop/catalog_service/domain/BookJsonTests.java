@@ -1,5 +1,6 @@
 package com.polarbookshop.catalog_service.domain;
 
+import static com.polarbookshop.catalog_service.domain.BookFixture.createBook;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.Test;
@@ -15,7 +16,7 @@ class BookJsonTests {
 
     @Test
     void testSerialize() throws Exception {
-        var book = Book.of("1234567890", "Title", "Author", 9.90);
+        var book = createBook();
         var jsonContent = json.write(book);
         assertThat(jsonContent).extractingJsonPathStringValue("@.isbn").isEqualTo(book.isbn());
         assertThat(jsonContent).extractingJsonPathStringValue("@.title").isEqualTo(book.title());
@@ -30,11 +31,12 @@ class BookJsonTests {
                 "isbn": "1234567890",
                 "title": "Title",
                 "author": "Author",
-                "price": 9.90
+                "price": 9.90,
+                "publisher": "BIG FOOT"
             }
             """;
         assertThat(json.parse(content))
             .usingRecursiveComparison()
-            .isEqualTo(Book.of("1234567890", "Title", "Author", 9.90));
+            .isEqualTo(createBook());
     }
 }

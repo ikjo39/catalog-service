@@ -1,5 +1,6 @@
 package com.polarbookshop.catalog_service.domain;
 
+import static com.polarbookshop.catalog_service.domain.BookFixture.createBook;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.polarbookshop.catalog_service.config.DataConfig;
@@ -29,7 +30,7 @@ class BookRepositoryJdbcTests {
     @Test
     void findBookByIsbnWhenExisting() {
         var bookIsbn = "1234561237";
-        var book = Book.of(bookIsbn, "Title", "Author", 12.90);
+        var book = createBook(bookIsbn, 12.90);
         jdbcAggregateTemplate.insert(book);
         Optional<Book> actualBook = bookRepository.findByIsbn(bookIsbn);
 

@@ -1,5 +1,6 @@
 package com.polarbookshop.catalog_service;
 
+import static com.polarbookshop.catalog_service.domain.BookFixture.createBook;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.polarbookshop.catalog_service.domain.Book;
@@ -19,7 +20,7 @@ class CatalogServiceApplicationTests {
 
     @Test
     void whenPostRequestThenBookCreated() {
-        var expectedBook = Book.of("1234567890", "Title", "Author", 9.90);
+        var expectedBook = createBook();
 
         webTestClient.post()
             .uri("/books")

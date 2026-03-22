@@ -1,5 +1,6 @@
 package com.polarbookshop.catalog_service.domain;
 
+import static com.polarbookshop.catalog_service.domain.BookFixture.createBook;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import jakarta.validation.ConstraintViolation;
@@ -22,14 +23,14 @@ class BookValidationTests {
 
     @Test
     void whenAllFieldsCorrectThenValidationSucceeds() {
-        var book = Book.of("1234567890", "Title", "Author", 9.90);
+        var book = createBook();
         Set<ConstraintViolation<Book>> violations = validator.validate(book);
         assertThat(violations).isEmpty();
     }
 
     @Test
     void whenIsbnDefinedButIncorrectThenValidationFails() {
-        var book = Book.of("123456789", "Title", "Author", 9.90);
+        var book = createBook("123456789");
         Set<ConstraintViolation<Book>> violations = validator.validate(book);
         assertThat(violations).hasSize(1);
         assertThat(violations.iterator().next().getMessage()).isEqualTo("The ISBN format must be valid.");
