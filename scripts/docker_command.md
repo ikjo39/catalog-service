@@ -35,3 +35,12 @@ docker run -d \
   -p 9001:9001 \
   catalog-service
 ```
+
+```shell
+./gradlew bootBuildImage \
+  --iamgeName ghcr.io/<your.github_username>/catalog-service \
+  --publishImage \
+  -PregistryUrl=ghcr.io \
+  -PregistryUsername=<your_github_github_username> \
+  -PregistryToken=<your_github_token>
+```

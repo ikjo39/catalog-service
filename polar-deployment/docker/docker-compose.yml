@@ -1,0 +1,25 @@
+services:
+  catalog-service:
+    depends_on:
+      - polar-postgres
+    image: "catalog-service"
+    container_name: "catalog-service"
+    ports:
+      - 9001:8080
+      - 8001:8001 # JVM이 디버그 연결을 듣는 포트
+    environment:
+      - BPL_JVM_THREAD_COUNT=50 # 메모리 계산을 윟나 스레드 수를 설정하는 패키도 빌드팩 환경변수
+      - BPL_DEBUG_ENABLED=true
+      - BPL_DEBUG_PORT=8001
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://polar-postgres:5432/polardb_catalog
+      - SPRING_PROFILES_ACTIVE=testdata
+
+  polar-postgres:
+    image: "postgres:14.4"
+    container_name: "polar-postgres"
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=polardb_catalog
