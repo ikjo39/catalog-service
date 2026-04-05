@@ -1,0 +1,84 @@
+name: Commit Stage
+on: push
+
+env:
+  REGISTRY: ghcr.io # 깃허브 컨테이너 저장소
+  IMAGE_NAME: ikjo39/catalog-service
+  VERSION: latest
+
+jobs:
+  build:
+    name: Build and Test
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+      security-events: write # 보안 스캔 결과를 GitHub Security 탭에 업로드 권한
+    steps:
+    - name: Checkout source code
+      uses: actions/checkout@v3
+    - name: Set up JDK
+      uses: actions/setup-java@v3 # Temurin 배포판 JDK 17 설치 및 Gradle 캐시 활성화
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        cache: gradle
+    - name: Code vulnerability scanning
+      uses: anchore/scan-action@v7 # Grype 기반 취약점 스캐너로 소스 코드 및 의존성 분석
+      id: scan
+      with:
+        path: "${{ github.workspace }}" # 워크스페이스 전체 경로를 스캔 대상으로 지정
+        fail-build: false # 취약점 발견 시에도 빌드를 실패 처리하지 않음
+        severity-cutoff: high # HIGH 이상 심각도의 취약점만 보고
+    - name: Upload vulnerability report
+      uses: github/codeql-action/upload-sarif@v4 # SARIF 보고서를 GitHub Security 탭에 업로드
+      if: success() || failure() # 이전 단계 성공/실패 여부와 관계없이 항상 실행
+      with:
+        sarif_file: ${{ steps.scan.outputs.sarif }} # scan 단계에서 생성된 SARIF 파일 경로 참조
+    - name: Build, unit tests and integration tests
+      run: | # Gradle로 컴파일, 단위 테스트, 통합 테스트를 순차적으로 실행
+        chmod +x gradlew # gradlew 파일에 실행 권한 부여
+        ./gradlew build # 빌드 및 전체 테스트 수행
+  package:
+    name: Package and Publish
+    if: ${{ github.ref == 'refs/heads/main' }} # main 브랜치 푸시 시에만 실행
+    needs: [ build ]
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+      packages: write # GitHub Container Registry에 이미지 푸시 권한
+      security-events: write # 보안 스캔 결과를 GitHub Security 탭에 업로드 권한
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v3
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: gradle
+      - name: Build container image
+        run: | # Gradle bootBuildImage로 OCI 컨테이너 이미지를 빌드하고 GHCR 경로로 태그 지정
+          chmod +x gradlew
+          ./gradlew bootBuildImage \
+          --imageName=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.VERSION }}
+      - name: OCI Image vulnerability scanning
+        uses: anchore/scan-action@v7
+        id: scan
+        with:
+          image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.VERSION }}
+          fail-build: false
+          severity-cutoff: high
+      - name: Upload vulnerability report
+        uses: github/codeql-action/upload-sarif@v4
+        if: success() || failure()
+        with:
+          sarif_file: ${{ steps.scan.outputs.sarif }}
+      - name: Log in to the Container registry
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Push container image
+        run: | # 빌드한 컨테이너 이미지를 GHCR에 푸시
+          docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.VERSION }}
