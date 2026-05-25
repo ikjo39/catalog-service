@@ -1,3 +1,14 @@
+server:
+  port: 9000
+  netty:
+    connection-timeout: 2s # 서버와 TCP 연결 수립하기까지 기다리는 시간
+  shutdown: graceful
+
 spring:
   application:
     name: edge-service
+  lifecycle:
+    timeout-per-shutdown-phase: 15s # Graceful Shutdown 시간
+  profiles:
+    include:
+      - cloud

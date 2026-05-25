@@ -1,25 +1,93 @@
 services:
+  # 애플리케이션
   catalog-service:
     depends_on:
       - polar-postgres
     image: "catalog-service"
     container_name: "catalog-service"
     ports:
-      - 9001:8080
-      - 8001:8001 # JVM이 디버그 연결을 듣는 포트
+      - 9001:9001
+      - 8001:8001
     environment:
-      - BPL_JVM_THREAD_COUNT=50 # 메모리 계산을 위한 스레드 수를 설정하는 패키도 빌드팩 환경변수
-#      - BPL_DEBUG_ENABLED=true # 로컬 개발용
+      # Buildpacks 메모리 계산 시 JVM 스레드 수 설정
+      - BPL_JVM_THREAD_COUNT=50
+      # Buildpacks 8001 포트를 통한 소켓 디버그 활성화
+      - BPL_DEBUG_ENABLED=true
       - BPL_DEBUG_PORT=8001
+      - SPRING_CLOUD_CONFIG_URI=http://config-service:8888
       - SPRING_DATASOURCE_URL=jdbc:postgresql://polar-postgres:5432/polardb_catalog
       - SPRING_PROFILES_ACTIVE=testdata
+  
+  order-service:
+    depends_on:
+      - polar-postgres
+    image: "order-service"
+    container_name: "order-service"
+    ports:
+      - 9002:9002
+      - 8002:8002
+    environment:
+      # Buildpacks 8002 포트를 통한 소켓 디버그 활성화
+      - BPL_DEBUG_ENABLED=true
+      - BPL_DEBUG_PORT=8002
+      - POLAR_CATALOG_SERVICE_URI=http://catalog-service:9001
+      - SPRING_CLOUD_CONFIG_URI=http://config-service:8888
+      - SPRING_R2DBC_URL=r2dbc:postgresql://polar-postgres:5432/polardb_order
+      - SPRING_FLYWAY_URL=jdbc:postgresql://polar-postgres:5432/polardb_order
+  
+  edge-service:
+    depends_on:
+      - polar-redis
+    image: "edge-service"
+    container_name: "edge-service"
+    ports:
+      - 9000:9000
+      - 8000:8000
+    environment:
+      # Buildpacks 8000 포트를 통한 소켓 디버그 활성화
+      - BPL_DEBUG_ENABLED=true
+      - BPL_DEBUG_PORT=8000
+      - CATALOG_SERVICE_URL=http://catalog-service:9001
+      - ORDER_SERVICE_URL=http://order-service:9002
+      - SPRING_CLOUD_CONFIG_URI=http://config-service:8888
+      - SPRING_REDIS_HOST=polar-redis
+  
+  config-service:
+    image: "config-service"
+    container_name: "config-service"
+    ports:
+      - 8888:8888
+      - 9888:9888
+    environment:
+      # Buildpacks 메모리 계산 시 JVM 스레드 수 설정
+      - BPL_JVM_THREAD_COUNT=50
+      # Buildpacks 9888 포트를 통한 소켓 디버그 활성화
+      - BPL_DEBUG_ENABLED=true
+      - BPL_DEBUG_PORT=9888
 
+  # 지원 서비스
   polar-postgres:
-    image: "postgres:14.4"
+    image: "postgres:14.12"
     container_name: "polar-postgres"
     ports:
       - 5432:5432
     environment:
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_DB=polardb_catalog
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+    volumes:
+      - ./postgresql/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  polar-redis:
+    image: "redis:7.2"
+    container_name: "polar-redis"
+    ports:
+      - 6379:6379
+
+  polar-rabbitmq:
+    image: rabbitmq:3.10-management
+    container_name: polar-rabbitmq
+    ports:
+      - 5672:5672    # RabbitMQ가 AMQP 요청을 듣는 포트
+      - 15672:15672  # RabbitMQ 관리 GUI 노출 포트
+    volumes:
+      - ./rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
